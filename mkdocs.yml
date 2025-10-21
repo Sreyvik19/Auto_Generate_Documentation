@@ -1,0 +1,26 @@
+site_name: My Auto Docs
+
+theme:
+  name: mkdocs
+
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link:  https://github.com/Sreyvik19/Auto_Generate_Documentation
+
+repo_url:  https://github.com/Sreyvik19/Auto_Generate_Documentation
+repo_name: GitHub
+edit_uri: edit/main/docs/
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+
+nav:
+  - Home: index.md
+  - API : api.md
+  - About: about.md
+ 
+# theme: readthedocs
