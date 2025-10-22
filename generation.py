@@ -25,8 +25,8 @@ def generate_certificates(excel_file, template_file, output_folder, font_path="a
             name_position = (700, 600)
         else:
             name_position = (730, 600)
-        draw.text(name_position, name, fill="primary", font= font_name)
-        output_path = os.path.joi (output_folder, "certificate_" + name + ".png")
+        draw.text(name_position, name, fill="gold", font= font_name)
+        output_path = os.path.join (output_folder, "certificate_" + name + ".png")
         certificate.save(output_path)
         print("Certificate generated for {} and saved to {}".format(name, output_path))
     print("All certificates have been generated !")
