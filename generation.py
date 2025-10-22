@@ -86,3 +86,96 @@ def GeneratAssociate(option):
                 os.remove(doc_path)
     print("All files for option '{}' have been generated!".format(option))
 
+# Functions for generating Transcripts
+
+def TranscriptExcel_data(filename):
+    workbook = openpyxl.load_workbook(filename)
+    sheet = workbook.active
+    return list(sheet.values)
+
+def TranscriptDocument(template, output_directory, row_data):
+    doc = DocxTemplate(template)
+    current_date = datetime.now().strftime("%B %d, %Y")
+    doc.render({
+        "student_id": row_data[0],
+        "first_name": row_data[1],
+        "last_name": row_data[2],
+        "logic": row_data[3],
+        "l_g": row_data[4],
+        "bcum": row_data[5],
+        "bc_g": row_data[6],
+        "design": row_data[7],
+        "d_g": row_data[8],
+        "p1": row_data[9],
+        "p1_g": row_data[10],
+        "e1": row_data[11],
+        "e1_g": row_data[12],
+        "wd": row_data[13],
+        "wd_g": row_data[14],
+        "algo": row_data[15],
+        "al_g": row_data[16],
+        "p2": row_data[17],
+        "p2_g": row_data[18],
+        "e2": row_data[19],
+        "e2_g": row_data[20],
+        "sd": row_data[21],
+        "sd_g": row_data[22],
+        "js": row_data[23],
+        "js_g": row_data[24],
+        "php": row_data[25],
+        "ph_g": row_data[26],
+        "db": row_data[27],
+        "db_g": row_data[28],
+        "vc1": row_data[29],
+        "v1_g": row_data[30],
+        "node": row_data[31],
+        "no_g": row_data[32],
+        "e3": row_data[33],
+        "e3_g": row_data[34],
+        "p3": row_data[35],
+        "p3_g": row_data[36],
+        "oop": row_data[37],
+        "op_g": row_data[38],
+        "lar": row_data[39],
+        "lar_g": row_data[40],
+        "vue": row_data[41],
+        "vu_g": row_data[42],
+        "vc2": row_data[43],
+        "v2_g": row_data[44],
+        "e4": row_data[45],
+        "e4_g": row_data[46],
+        "p4": row_data[47],
+        "p4_g": row_data[48],
+        "int": row_data[49],
+        "in_g": row_data[50],
+        'cur_date': current_date
+    })
+    doc_name = os.path.join(output_directory, "{}.docx".format(row_data[1]))
+    doc.save(doc_name)
+    return doc_name
+
+def TranscriptPdf(doc_path, pdf_directory):
+    pdf_path = os.path.join(pdf_directory, os.path.splitext(os.path.basename(doc_path))[0] + ".pdf")
+    convert(doc_path, pdf_path)
+    return pdf_path
+
+def generate_transcripts(option):
+    excel_file = "data.xlsx"
+    template_file = "template-pnc.docx"
+    docx_directory = "Transcript_Doc"
+    pdf_directory = "Transcript_PDF"
+
+    os.makedirs(docx_directory, exist_ok=True)
+    os.makedirs(pdf_directory, exist_ok=True)
+    data_rows = TranscriptExcel_data(excel_file)
+
+    for row in data_rows[1:]:
+        if option in ["doc", "both"]:
+            doc_path = TranscriptDocument(template_file, docx_directory, row)
+        if option in ["pdf", "both"]:
+            if option == "pdf":
+                doc_path = TranscriptDocument(template_file, pdf_directory, row)
+            TranscriptPdf(doc_path, pdf_directory)
+            if option == "pdf":
+                os.remove(doc_path)
+    print("All files for option '{}' have been generated!".format(option))
