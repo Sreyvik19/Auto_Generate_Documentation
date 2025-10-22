@@ -179,3 +179,78 @@ def generate_transcripts(option):
             if option == "pdf":
                 os.remove(doc_path)
     print("All files for option '{}' have been generated!".format(option))
+
+# GUI Implementation
+
+def create_ui():
+    def show_option_menu(title, generate_function):
+        option_window = tk.Toplevel(window)
+        option_window.title(title)
+        tk.Label(option_window, text="Select the output format:").pack(padx=20, pady=10)
+
+        def generate_with_option(selected_option):
+            generate_function(selected_option)
+            result_label.config(text="{} generated successfully!".format(title))  # Update the message
+            option_window.destroy()
+
+        tk.Button(option_window, text="DOCX Only", bg="blue", fg="white", command=lambda: generate_with_option("doc")).pack(padx=20, pady=5)
+        tk.Button(option_window, text="PDF Only", bg="blue", fg="white", command=lambda: generate_with_option("pdf")).pack(padx=20, pady=5)
+        tk.Button(option_window, text="Both DOCX and PDF", bg="blue", fg="white", command=lambda: generate_with_option("both")).pack(padx=20, pady=5)
+
+    def generate_certificates_direct():
+        generate_certificates(
+            excel_file="Certificate.xlsx",
+            template_file="certificate.png",
+            output_folder="Certificates"
+        )
+        result_label.config(text="Certificates generated successfully!")  # Update the message
+
+    def generate_all():
+        option_window = tk.Toplevel(window)
+        option_window.title("Generate All")
+        tk.Label(option_window, text="Select the output format for all documents:").pack(padx=20, pady=10)
+
+        def generate_all_with_option(selected_option):
+            generate_transcripts(selected_option)
+            generate_certificates(
+                excel_file="Certificate.xlsx",
+                template_file="certificate.png",
+                output_folder="Certificates"
+            )
+            GeneratAssociate(selected_option)
+            option_window.destroy()
+            result_label.config(text="All documents have been generated successfully!")  # Update the message
+
+        tk.Button(option_window, text="DOCX Only", bg="blue", fg="white", command=lambda: generate_all_with_option("doc")).pack(padx=20, pady=5)
+        tk.Button(option_window, text="PDF Only", bg="blue", fg="white", command=lambda: generate_all_with_option("pdf")).pack(padx=20, pady=5)
+        tk.Button(option_window, text="Both DOCX and PDF", bg="blue", fg="white", command=lambda: generate_all_with_option("both")).pack(padx=20, pady=5)
+
+    window = tk.Tk()
+    window.geometry("500x500")
+    window.title("Automated Document Generator")
+
+    # Add a styled title
+
+    title_label = tk.Label(
+        window,
+        text="Automated Document Generation",
+        font=("Helvetica", 34, "bold"),
+        fg="gray"
+    )
+    title_label.pack(pady=20)
+
+    # Add result feedback label
+
+    result_label = tk.Label(window, text="", fg="green", font=("Arial", 12))
+    result_label.pack(pady=10)
+
+    # Buttons
+
+    tk.Button(window, text="Generate Transcript", bg="green", fg="white",font=("Arial", 12, "bold"), width=25, height=2, padx=18, command=lambda: show_option_menu("Transcript", generate_transcripts)).pack(pady=10)
+    tk.Button(window, text="Generate Certificates", bg="green", fg="white", font=("Arial", 12, "bold"), width=25, height=2, padx=18, command=generate_certificates_direct).pack(pady=10)
+    tk.Button(window, text="Generate Associate", bg="green", fg="white", font=("Arial", 12, "bold"), width=25, height=2, padx=18, command=lambda: show_option_menu("Associate Documents", GeneratAssociate)).pack(pady=10)
+    tk.Button(window, text="Generate All", bg="green", fg="white", font=("Arial", 12, "bold"), width=25, height=2, padx=18, command=generate_all).pack(pady=20)
+
+    window.mainloop()
+
+create_ui()
