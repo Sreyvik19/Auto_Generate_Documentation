@@ -4,13 +4,15 @@ import os
 from docxtpl import DocxTemplate
 from docx2pdf import convert
 from PIL import Image, ImageDraw, ImageFont
+from pptx import Presentation
+from pptx.util import Inches
 import openpyxl
 import pandas as pd
 from datetime import datetime
 
 # Function for generating certificates
 
-def generate_certificates(excel_file, template_file, output_folder, font_path="arialbd.ttf", font_size=100):
+def generate_certificates(excel_file, template_file, output_folder, font_path="ariali.ttf", font_size=130):
     data = pd.read_excel(excel_file)
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -25,11 +27,37 @@ def generate_certificates(excel_file, template_file, output_folder, font_path="a
             name_position = (700, 600)
         else:
             name_position = (730, 600)
-        draw.text(name_position, name, fill="gold", font= font_name)
-        output_path = os.path.join (output_folder, "certificate_" + name + ".png")
+        draw.text(name_position, name, fill="blue", font=font_name)
+        output_path = os.path.join(output_folder, "certificate_" + name + ".png")
         certificate.save(output_path)
-        print("Certificate generated for {} and saved to {}".format(name, output_path))
-    print("All certificates have been generated !")
+        print(f"Certificate generated for {name} and saved to {output_path}")
+    print("All certificates have been generated!")
+
+    data = pd.read_excel(excel_file)
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    font_name = ImageFont.truetype(font_path, font_size)
+    prs = Presentation()
+
+    for index, row in data.iterrows():
+        name = row["Name"]
+        certificate = Image.open(template_file)
+        draw = ImageDraw.Draw(certificate)
+        name_position = (500, 600) if len(name) >= 15 else (700, 600)
+        draw.text(name_position, name, fill="gold", font=font_name)
+        image_path = os.path.join(output_folder, f"certificate_{name}.png")
+        certificate.save(image_path)
+        print(f"Certificate generated for {name} and saved to {image_path}")
+        slide_layout = prs.slide_layouts[6]  # Blank slide layout
+        slide = prs.slides.add_slide(slide_layout)
+        left = top = Inches(1)
+        pic = slide.shapes.add_picture(image_path, left, top, width=Inches(8.5), height=Inches(6))
+
+    pptx_path = os.path.join(output_folder, "certificates_presentation.pptx")
+    prs.save(pptx_path)
+    print(f"PowerPoint presentation saved to {pptx_path}")
+
+    print("All certificates have been generated and added to the PowerPoint presentation!")
 
 # Functions for generating Associate Degree documents
 
