@@ -12,7 +12,7 @@ from datetime import datetime
 
 # Function for generating certificates
 
-def generate_certificates(excel_file, template_file, output_folder, font_path="ariali.ttf", font_size=130):
+def generate_certificates(excel_file, template_file, output_folder, font_path="ariali.ttf", font_size=110):
     data = pd.read_excel(excel_file)
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
