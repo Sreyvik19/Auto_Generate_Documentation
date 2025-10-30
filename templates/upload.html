@@ -1,0 +1,593 @@
+Phuong Savin Class B 2026, [10/28/2025 8:06 PM]
+
+
+[file name]: upload.html
+[file content begin]
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Documents - DocGenius</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #8B5CF6;
+            --primary-dark: #7C3AED;
+            --secondary: #06B6D4;
+            --accent: #10B981;
+            --warning: #F59E0B;
+            --dark: #1F2937;
+            --light: #F9FAFB;
+            --gradient: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
+            --gradient-2: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #06B6D4 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        .upload-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 100px 0 50px;
+        }
+
+        .upload-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .upload-header {
+            background: var(--gradient);
+            color: white;
+            padding: 2.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        .upload-body {
+            padding: 2.5rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #E5E7EB;
+            z-index: 1;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-number {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .step-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6B7280;
+        }
+
+        .step.active .step-label {
+            color: var(--primary);
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            border-color: var(--primary);
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.1);
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .option-card {
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .option-card.selected {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+        }
+
+        .upload-zone {
+            border: 3px dashed #D1D5DB;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(249, 250, 251, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .upload-zone:hover::before {
+            left: 100%;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .btn-generate {
+            background: var(--gradient-2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 40px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(139, 92, 246, 0.95);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 24px;
+        }
+
+        .spinner-grow {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .navbar-modern {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-modern fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-white" href="/">
+                <i class="fas fa-magic me-2"></i>DocGenius
+            </a>
+            <div>
+                <a href="/" class="btn btn-outline-light me-2">
+                    <i class="fas fa-home me-1"></i>Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="upload-wrapper">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="upload-container fade-in">
+                        <div class="upload-header">
+                            <h2 class="mb-2"><i class="fas fa-cloud-upload-alt me-2"></i>Create Your Documents</h2>
+                            <p class="mb-0 opacity-90">Follow these simple steps to generate amazing documents</p>
+                        </div>
+
+                        <div class="upload-body position-relative">
+                            <!-- Step Indicator -->
+                            <div class="step-indicator">
+                                <div class="step active">
+                                    <div class="step-number">1</div>
+                                    <div class="step-label">Document Type</div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">2</div>
+                                    <div class="step-label">Data Source</div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">3</div>
+                                    <div class="step-label">Upload Files</div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-number">4</div>
+                                    <div class="step-label">Generate</div>
+                                </div>
+                            </div>
+
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                            {% for category, message in messages %}
+                            <div
+                                class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+                                <i
+                                    class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% endwith %}
+
+
+
+
+                            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                                <!-- Step 1: Document Type -->
+                                <div class="form-section fade-in">
+                                    <label class="form-label fw-bold text-dark mb-3">
+                                        <i class="fas fa-file-alt me-2"></i>What would you like to create?
+                                    </label>
+                                    <div class="option-grid">
+                                        <div class="option-card" onclick="selectOption('transcript')">
+                                            <input type="radio" class="btn-check" name="document_type"
+                                                value="transcript" id="transcript" required>
+                                            <i class="fas fa-graduation-cap fa-2x text-primary mb-2"></i>
+                                            <div class="fw-semibold">Transcript</div>
+                                            <small class="text-muted">Academic Records</small>
+                                        </div>
+                                        <div class="option-card" onclick="selectOption('certificate')">
+                                            <input type="radio" class="btn-check" name="document_type"
+                                                value="certificate" id="certificate">
+                                            <i class="fas fa-award fa-2x text-success mb-2"></i>
+                                            <div class="fw-semibold">Certificate</div>
+                                            <small class="text-muted">Achievements</small>
+                                        </div>
+                                        <div class="option-card" onclick="selectOption('associate')">
+                                            <input type="radio" class="btn-check" name="document_type" value="associate"
+                                                id="associate">
+                                            <i class="fas fa-user-graduate fa-2x text-info mb-2"></i>
+                                            <div class="fw-semibold">Associate</div>
+                                            <small class="text-muted">Degree Documents</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <!-- Step 2: Output Format -->
+                                <div class="form-section fade-in">
+                                    <label class="form-label fw-bold text-dark mb-3">
+                                        <i class="fas fa-download me-2"></i>Choose Your Format
+                                    </label>
+                                    <div class="option-grid">
+                                        <div class="option-card" onclick="selectFormat('doc')">
+                                            <input type="radio" class="btn-check" name="file_format" value="doc"
+                                                id="formatDoc">
+                                            <i class="fas fa-file-word fa-2x text-primary mb-2"></i>
+                                            <div class="fw-semibold">DOCX</div>
+                                        </div>
+                                        <div class="option-card" onclick="selectFormat('pdf')">
+                                            <input type="radio" class="btn-check" name="file_format" value="pdf"
+                                                id="formatPdf">
+                                            <i class="fas fa-file-pdf fa-2x text-danger mb-2"></i>
+                                            <div class="fw-semibold">PDF</div>
+                                        </div>
+                                        <div class="option-card selected" onclick="selectFormat('both')">
+                                            <input type="radio" class="btn-check" name="file_format" value="both"
+                                                id="formatBoth" checked>
+                                            <i class="fas fa-copy fa-2x text-warning mb-2"></i>
+                                            <div class="fw-semibold">Both</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Data Source -->
+                                <div class="form-section fade-in">
+                                    <label class="form-label fw-bold text-dark mb-3">
+                                        <i class="fas fa-database me-2"></i>How would you like to provide student data?
+                                    </label>
+                                    <div class="option-grid">
+                                        <div class="option-card selected" onclick="selectDataSource('excel')">
+                                            <input type="radio" class="btn-check" name="data_method" value="excel"
+                                                id="excelMethod" checked>
+                                            <i class="fas fa-file-excel fa-2x text-success mb-2"></i>
+                                            <div class="fw-semibold">Excel File</div>
+                                            <small class="text-muted">Multiple Students</small>
+                                        </div>
+                                        <div class="option-card" onclick="selectDataSource('manual')">
+                                            <input type="radio" class="btn-check" name="data_method" value="manual"
+                                                id="manualMethod">
+                                            <i class="fas fa-keyboard fa-2x text-warning mb-2"></i>
+                                            <div class="fw-semibold">Manual Input</div>
+                                            <small class="text-muted">Single Student</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+                                <!-- File Upload Sections -->
+                                <div id="excelSection" class="form-section fade-in">
+                                    <label class="form-label fw-bold text-dark mb-3">
+                                        <i class="fas fa-file-excel me-2"></i>Upload Excel Data File
+                                    </label>
+                                    <div class="upload-zone" id="excelUploadArea">
+                                        <input type="file" class="d-none" id="excel_file" name="excel_file"
+                                            accept=".xlsx,.xls">
+                                        <i class="fas fa-file"></i>
+                                        <i class=" fas fa-file-excel fa-3x text-success mb-3"></i>
+                                        <h5 class="fw-semibold">Drop your Excel file here or click to browse</h5>
+                                        <p class="text-muted mb-0">Supports .xlsx, .xls files</p>
+                                    </div>
+                                    <div class="mt-3" id="excelFileName"></div>
+                                </div>
+
+                                <div id="manualSection" class="form-section fade-in" style="display: none;">
+                                    <label class="form-label fw-bold text-dark mb-3">
+                                        <i class="fas fa-keyboard me-2"></i>Enter Student Details
+                                    </label>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" name="student_name"
+                                                placeholder="Enter student name">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Student ID</label>
+                                            <input type="text" class="form-control" name="student_id"
+                                                placeholder="Enter student ID">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Course</label>
+                                            <input type="text" class="form-control" name="course"
+                                                placeholder="Enter course name">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Grade</label>
+                                            <input type="text" class="form-control" name="grade"
+                                                placeholder="Enter grade">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Template Upload -->
+                                <div class="form-section fade-in">
+                                    <label class="form-label fw-bold text-dark mb-3">
+                                        <i class="fas fa-file-alt me-2"></i>Upload Document Template
+                                    </label>
+                                    <div class="upload-zone" id="templateUploadArea">
+                                        <input type="file" class="d-none" id="template_file" name="template_file"
+                                            accept=".png,.jpg,.jpeg">
+                                        <i class="fas fa-file-word fa-3x text-primary mb-3"></i>
+                                        <h5 class="fw-semibold">Drop your template file here or click to browse</h5>
+                                        <p class="text-muted mb-0">Supports .docx files</p>
+                                    </div>
+                                    <div class="mt-3" id="templateFileName"></div>
+                                </div>
+
+                                <!-- Generate Button -->
+                                <div class="text-center mt-4">
+                                    <button type="submit" class="btn btn-generate">
+                                        <i class="fas fa-bolt me-2"></i>Generate Documents
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Loading Overlay -->
+                            <div class="loading-overlay" id="loadingOverlay">
+                                <div class="text-center text-white">
+                                    <div class="spinner-grow" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <h4 class="mt-3">Generating Your Documents...</h4>
+                                    <p class="mb-0">This may take a few moments</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Option selection functions
+        function selectOption(type) {
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            document.getElementById(type).checked = true;
+        }
+
+        function selectFormat(format) {
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            document.getElementById('format' + format.charAt(0).toUpperCase() + format.slice(1)).checked = true;
+        }
+
+        function selectDataSource(method) {
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            document.getElementById(method + 'Method').checked = true;
+
+            // Toggle between Excel and Manual sections
+            if (method === 'excel') {
+                document.getElementById('excelSection').style.display = 'block';
+                document.getElementById('manualSection').style.display = 'none';
+            } else {
+                document.getElementById('excelSection').style.display = 'none';
+                document.getElementById('manualSection').style.display = 'block';
+            }
+        }
+
+        // File upload handling
+        function setupFileUpload(uploadZoneId, fileInputId, fileNameDisplayId) {
+            const uploadZone = document.getElementById(uploadZoneId);
+            const fileInput = document.getElementById(fileInputId);
+            const fileNameDisplay = document.getElementById(fileNameDisplayId);
+
+            uploadZone.addEventListener('click', () => fileInput.click());
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    updateFileNameDisplay(files[0].name, fileNameDisplay);
+                }
+            });
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    updateFileNameDisplay(fileInput.files[0].name, fileNameDisplay);
+                }
+            });
+        }
+
+        function updateFileNameDisplay(fileName, displayElement) {
+            displayElement.innerHTML = `
+                <div class="alert alert-success d-flex align-items-center">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span>File selected: ${fileName}</span>
+                </div>
+            `;
+        }
+
+        // Initialize file uploads
+        setupFileUpload('excelUploadArea', 'excel_file', 'excelFileName');
+        setupFileUpload('templateUploadArea', 'template_file', 'templateFileName');
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+
+            // Simulate processing delay
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 3000);
+        });
+    </script>
+</body>
+
+</html>
