@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, send_from_directory, session
 import os
 import pandas as pd
@@ -9,6 +8,9 @@ import openpyxl
 from datetime import datetime
 import uuid
 import json
+import mysql.connector
+from mysql.connector import Error
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
@@ -16,12 +18,185 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['GENERATED_FOLDER'] = 'generated_docs'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
+# MySQL Configuration - UPDATE THESE WITH YOUR CREDENTIALS
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'  # Change to your MySQL username
+app.config['MYSQL_PASSWORD'] = ''  # Change to your MySQL password
+app.config['MYSQL_DATABASE'] = 'student_documents'
+app.config['MYSQL_PORT'] = 3306
+
 # Create necessary directories
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['GENERATED_FOLDER'], exist_ok=True)
 
 # Store generated files info (in production, use database)
 generated_files_store = {}
+
+# ---------------------- MySQL Database Functions ----------------------
+def get_db_connection():
+    """Create and return a MySQL database connection"""
+    try:
+        conn = mysql.connector.connect(
+            host=app.config['MYSQL_HOST'],
+            user=app.config['MYSQL_USER'],
+            password=app.config['MYSQL_PASSWORD'],
+            database=app.config['MYSQL_DATABASE'],
+            port=app.config['MYSQL_PORT']
+        )
+        return conn
+    except Error as e:
+        print(f"❌ Error connecting to MySQL: {e}")
+        # If database doesn't exist, try to create it
+        if "Unknown database" in str(e):
+            return create_database()
+        return None
+
+def create_database():
+    """Create database if it doesn't exist"""
+    try:
+        # Connect without specifying database
+        conn = mysql.connector.connect(
+            host=app.config['MYSQL_HOST'],
+            user=app.config['MYSQL_USER'],
+            password=app.config['MYSQL_PASSWORD'],
+            port=app.config['MYSQL_PORT']
+        )
+        cursor = conn.cursor()
+        
+        # Create database
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {app.config['MYSQL_DATABASE']}")
+        print(f"✅ Database '{app.config['MYSQL_DATABASE']}' created successfully")
+        
+        cursor.close()
+        conn.close()
+        
+        # Now reconnect with the database
+        return get_db_connection()
+    except Error as e:
+        print(f"❌ Error creating database: {e}")
+        return None
+
+def init_db():
+    """Initialize the database with required tables"""
+    conn = get_db_connection()
+    if conn is None:
+        print("❌ Failed to connect to MySQL database")
+        return False
+        
+    cursor = conn.cursor()
+    
+    try:
+        # Create students table with MySQL syntax
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS student_certificates (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                name TEXT NOT NULL,
+                certificate TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        conn.commit()
+        print("✅ MySQL Database initialized successfully!")
+        return True
+    except Error as e:
+        print(f"❌ Error creating table: {e}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
+def store_student_data(name, certificate_path=None):
+    """Store student_certificate data in the database"""
+    conn = get_db_connection()
+    if conn is None:
+        print("❌ Cannot connect to database to store student_certificate data")
+        return None
+        
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute(
+            'INSERT INTO student_certificates (name, certificate) VALUES (%s, %s)',
+            (name, certificate_path)
+        )
+        
+        student_id = cursor.lastrowid
+        conn.commit()
+        print(f"✅ Student data stored - ID: {student_id}, Name: {name}")
+        return student_id
+    except Error as e:
+        print(f"❌ Error storing student data: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_all_students():
+    """Retrieve all student_certificates from the database"""
+    conn = get_db_connection()
+    if conn is None:
+        return []
+        
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        cursor.execute('SELECT * FROM student_certificates ORDER BY created_at DESC')
+        student_certificates = cursor.fetchall()
+        print(f"✅ Retrieved {len(student_certificates)} student_certificates from database")
+        return student_certificates
+    except Error as e:
+        print(f"❌ Error retrieving students: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_student_by_id(student_id):
+    """Retrieve a specific student by ID"""
+    conn = get_db_connection()
+    if conn is None:
+        return None
+        
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        cursor.execute('SELECT * FROM student_certificates WHERE id = %s', (student_id,))
+        student = cursor.fetchone()
+        return student
+    except Error as e:
+        print(f"❌ Error retrieving student {student_id}: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def update_student_certificate(student_id, certificate_path):
+    """Update student's certificate path in database"""
+    conn = get_db_connection()
+    if conn is None:
+        return False
+        
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute(
+            'UPDATE student_certificates SET certificate = %s WHERE id = %s',
+            (certificate_path, student_id)
+        )
+        
+        conn.commit()
+        print(f"✅ Updated certificate path for student {student_id}")
+        return True
+    except Error as e:
+        print(f"❌ Error updating student certificate: {e}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
+# Initialize database on startup
+init_db()
 
 # ---------------------- Individual Document Generator ----------------------
 def generate_individual_document(document_type, template_file, output_folder, student_data, file_format="both"):
@@ -61,7 +236,11 @@ def generate_individual_document(document_type, template_file, output_folder, st
             output_path = os.path.join(output_folder, output_filename)
             certificate.save(output_path)
             
+            # Store student data in database
+            student_id = store_student_data(name, output_path)
+            
             generated_files.append({
+                'id': student_id,
                 'name': name,
                 'filename': output_filename,
                 'type': 'certificate',
@@ -83,6 +262,8 @@ def generate_individual_document(document_type, template_file, output_folder, st
                 name_parts = student_name.split(' ', 1)
                 first_name = name_parts[0]
                 last_name = name_parts[1] if len(name_parts) > 1 else ''
+            
+            full_name = f"{first_name} {last_name}".strip() or student_name
             
             # Map student data to template variables
             context = {
@@ -147,8 +328,13 @@ def generate_individual_document(document_type, template_file, output_folder, st
                 doc_filename = f"transcript_{filename_safe}_{uuid.uuid4().hex[:8]}.docx"
                 doc_path = os.path.join(output_folder, doc_filename)
                 doc.save(doc_path)
+                
+                # Store student data in database
+                student_id = store_student_data(full_name, doc_path)
+                
                 generated_files.append({
-                    'name': f"{first_name} {last_name}".strip() or student_name,
+                    'id': student_id,
+                    'name': full_name,
                     'filename': doc_filename,
                     'type': 'transcript',
                     'format': 'docx',
@@ -165,8 +351,12 @@ def generate_individual_document(document_type, template_file, output_folder, st
                 pdf_path = os.path.join(output_folder, pdf_filename)
                 convert(doc_path, pdf_path)
                 
+                # Store student data in database
+                student_id = store_student_data(full_name, pdf_path)
+                
                 generated_files.append({
-                    'name': f"{first_name} {last_name}".strip() or student_name,
+                    'id': student_id,
+                    'name': full_name,
                     'filename': pdf_filename,
                     'type': 'transcript',
                     'format': 'pdf',
@@ -206,7 +396,12 @@ def generate_individual_document(document_type, template_file, output_folder, st
                 doc_filename = f"associate_{filename_safe}_{uuid.uuid4().hex[:8]}.docx"
                 doc_path = os.path.join(output_folder, doc_filename)
                 doc.save(doc_path)
+                
+                # Store student data in database
+                student_id = store_student_data(student_name, doc_path)
+                
                 generated_files.append({
+                    'id': student_id,
                     'name': student_name,
                     'filename': doc_filename,
                     'type': 'associate',
@@ -224,7 +419,11 @@ def generate_individual_document(document_type, template_file, output_folder, st
                 pdf_path = os.path.join(output_folder, pdf_filename)
                 convert(doc_path, pdf_path)
                 
+                # Store student data in database
+                student_id = store_student_data(student_name, pdf_path)
+                
                 generated_files.append({
+                    'id': student_id,
                     'name': student_name,
                     'filename': pdf_filename,
                     'type': 'associate',
@@ -245,7 +444,7 @@ def generate_individual_document(document_type, template_file, output_folder, st
 
 # ---------------------- Certificate Generator ----------------------
 def generate_certificates(excel_file, template_file, output_folder, font_path="arialbd.ttf", font_size=100):
-    """Generate certificates with perfectly centered names."""
+    """Generate certificates with perfectly centered names and store in database."""
     try:
         data = pd.read_excel(excel_file)
         if not os.path.exists(output_folder):
@@ -276,7 +475,12 @@ def generate_certificates(excel_file, template_file, output_folder, font_path="a
             output_filename = f"certificate_{name.replace(' ', '_')}_{uuid.uuid4().hex[:8]}.png"
             output_path = os.path.join(output_folder, output_filename)
             certificate.save(output_path)
+            
+            # Store student data in database
+            student_id = store_student_data(name, output_path)
+            
             generated_files.append({
+                'id': student_id,
                 'name': name,
                 'filename': output_filename,
                 'type': 'certificate',
@@ -324,7 +528,7 @@ def AssociateConvertPDF(doc_path, pdf_directory):
     return pdf_path
 
 def generate_associate_documents(excel_file, template_file, option):
-    """Generate associate documents with file tracking"""
+    """Generate associate documents with file tracking and database storage"""
     docx_directory = os.path.join(app.config['GENERATED_FOLDER'], "Associate_Documents")
     pdf_directory = os.path.join(app.config['GENERATED_FOLDER'], "Associate_PDF")
 
@@ -337,7 +541,12 @@ def generate_associate_documents(excel_file, template_file, option):
         if row[3]:  # Check if English name exists
             if option in ["doc", "both"]:
                 doc_path = AssociateDocument(template_file, docx_directory, row)
+                
+                # Store student data in database
+                student_id = store_student_data(row[3], doc_path)
+                
                 generated_files.append({
+                    'id': student_id,
                     'name': row[3],
                     'filename': os.path.basename(doc_path),
                     'type': 'associate',
@@ -352,7 +561,12 @@ def generate_associate_documents(excel_file, template_file, option):
                     doc_path = AssociateDocument(template_file, docx_directory, row)
                 
                 pdf_path = AssociateConvertPDF(doc_path, pdf_directory)
+                
+                # Store student data in database
+                student_id = store_student_data(row[3], pdf_path)
+                
                 generated_files.append({
+                    'id': student_id,
                     'name': row[3],
                     'filename': os.path.basename(pdf_path),
                     'type': 'associate',
@@ -440,7 +654,7 @@ def TranscriptPdf(doc_path, pdf_directory):
     return pdf_path
 
 def generate_transcripts(excel_file, template_file, option):
-    """Generate transcripts with file tracking"""
+    """Generate transcripts with file tracking and database storage"""
     docx_directory = os.path.join(app.config['GENERATED_FOLDER'], "Transcript_Doc")
     pdf_directory = os.path.join(app.config['GENERATED_FOLDER'], "Transcript_PDF")
 
@@ -451,10 +665,17 @@ def generate_transcripts(excel_file, template_file, option):
     generated_files = []
     for row in data_rows[1:]:
         if row[1] and row[2]:  # Check if first and last name exist
+            full_name = f"{row[1]} {row[2]}"
+            
             if option in ["doc", "both"]:
                 doc_path = TranscriptDocument(template_file, docx_directory, row)
+                
+                # Store student data in database
+                student_id = store_student_data(full_name, doc_path)
+                
                 generated_files.append({
-                    'name': f"{row[1]} {row[2]}",
+                    'id': student_id,
+                    'name': full_name,
                     'filename': os.path.basename(doc_path),
                     'type': 'transcript',
                     'format': 'docx',
@@ -468,8 +689,13 @@ def generate_transcripts(excel_file, template_file, option):
                     doc_path = TranscriptDocument(template_file, docx_directory, row)
                     
                 pdf_path = TranscriptPdf(doc_path, pdf_directory)
+                
+                # Store student data in database
+                student_id = store_student_data(full_name, pdf_path)
+                
                 generated_files.append({
-                    'name': f"{row[1]} {row[2]}",
+                    'id': student_id,
+                    'name': full_name,
                     'filename': os.path.basename(pdf_path),
                     'type': 'transcript',
                     'format': 'pdf',
@@ -485,6 +711,55 @@ def generate_transcripts(excel_file, template_file, option):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/database')
+def database_view():
+    """View all students in the database"""
+    students = get_all_students()
+    return render_template('database.html', students=students)
+
+@app.route('/download_db/<int:student_id>')
+def download_database_file(student_id):
+    """Download file from database record"""
+    student = get_student_by_id(student_id)
+    
+    if not student or not student['certificate']:
+        flash('File not found', 'error')
+        return redirect(url_for('database_view'))
+    
+    file_path = student['certificate']
+    
+    if not os.path.exists(file_path):
+        flash('File has been deleted', 'error')
+        return redirect(url_for('database_view'))
+    
+    return send_file(file_path, as_attachment=True)
+
+@app.route('/debug-mysql')
+def debug_mysql():
+    """View raw MySQL data for debugging"""
+    students = get_all_students()
+    
+    html = "<h1>🔧 MySQL Database Debug Info</h1>"
+    html += f"<p>Total records: {len(students)}</p>"
+    
+    if students:
+        for student in students:
+            html += f"""
+            <div style="border: 1px solid #ccc; margin: 10px; padding: 10px; background: #f9f9f9;">
+                <strong>ID:</strong> {student['id']}<br>
+                <strong>Name:</strong> {student['name']}<br>
+                <strong>Certificate Path:</strong> {student['certificate'] or 'None'}<br>
+                <strong>Created At:</strong> {student['created_at']}<br>
+            </div>
+            """
+    else:
+        html += "<p>No students found in database.</p>"
+    
+    html += '<br><a href="/database">Back to Database View</a> | '
+    html += '<a href="/">Back to Home</a>'
+    
+    return html
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
@@ -703,5 +978,8 @@ def cleanup(session_id):
 
 if __name__ == '__main__':
     print("🚀 Document Generator Server Starting...")
+    print("📊 Database: MySQL - student_documents")
+    print("🔧 Debug: http://localhost:5000/debug-mysql")
+    print("📊 Database View: http://localhost:5000/database")
     print("📧 Open: http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
